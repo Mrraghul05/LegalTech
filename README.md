@@ -18,7 +18,7 @@ LegalTech Assistant is a web-based tool to help users create basic legal documen
 4. Answer questions.
 5. Click **Download Legal Document** to get the PDF.
 
-## 🛠️ Technologies Used
+## Technologies Used
 
 - HTML, CSS, JavaScript
 - [html2pdf.js](https://github.com/eKoopmans/html2pdf)
