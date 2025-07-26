@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>LegalTech Assistant</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f2f5f9;
+      margin: 0;
+      padding: 0;
+      text-align: center;
+    }
+    header {
+      background-color: #004aad;
+      color: white;
+      padding: 20px 0;
+      font-size: 24px;
+      font-weight: bold;
+    }
+    #container {
+      margin: 20px auto;
+      max-width: 600px;
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    #chat-box {
+      height: 300px;
+      overflow-y: auto;
+      border: 1px solid #ddd;
+      padding: 10px;
+      border-radius: 5px;
+      background: #fafafa;
+      text-align: left;
+    }
+    .bot, .user {
+      margin: 10px 0;
+      padding: 8px 12px;
+      border-radius: 10px;
+      display: block;
+      clear: both;
+      max-width: 80%;
+    }
+    .bot {
+      background-color: #e0ecff;
+      float: left;
+    }
+    .user {
+      background-color: #d3f9d8;
+      float: right;
+    }
+    #controls {
+      margin-top: 15px;
+    }
+    input, select, button {
+      padding: 10px;
+      margin: 5px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+    button {
+      background: #004aad;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #00338d;
+    }
+  </style>
+</head>
+<body>
+
+  <header>⚖ LegalTech Assistant</header>
+
+  <div id="container">
+    <label for="topic">Choose a Legal Topic:</label>
+    <select id="topic">
+      <option value="">-- Select --</option>
+      <option value="rental">Rental Dispute</option>
+      <option value="rti">RTI Request</option>
+    </select>
+    <button onclick="startChat()">Start</button>
+
+    <div id="chat-box"></div>
+
+    <div id="controls">
+      <input type="text" id="user-input" placeholder="Type your answer...">
+      <button onclick="handleUserInput()">Send</button>
+    </div>
+
+    <button onclick="downloadPDF()">📄 Download Legal Document</button>
+    <button onclick="showHistory()">📚 View History</button>
+<div id="history-box" style="margin-top:20px; display:none; text-align:left;"></div>
+  </div>
+
+  <script src="https://raw.githack.com/eKoopmans/html2pdf/master/dist/html2pdf.bundle.js"></script>
+
+  <script>
+    let topic = "";
+    let step = 0;
+    let askingQuestions = false;
+    let answers = [];
+    let questions = [];
+
+    const rentalLegalInfo = "Under Indian Rent Control laws, landlords must return the security deposit within 30 days of tenant vacating the property. You have the right to send a legal notice to reclaim it.";
+    const rtiLegalInfo = "Under the RTI Act 2005, every citizen has the right to request information from a public authority. You can file an RTI to any government department.";
+
+    const questionFlows = {
+      rental: [
+        "What is your full name?",
+        "What is the landlord's name?",
+        "What is the property address?",
+        "Describe your rental issue briefly."
+      ],
+      rti: [
+        "What is your full name?",
+        "What is your address?",
+        "Which government department do you want to query?",
+        "What information are you requesting?"
+      ]
+    };
+
+    function addMessage(msg, type = "bot") {
+      const chatBox = document.getElementById("chat-box");
+      const div = document.createElement("div");
+      div.className = type;
+      div.innerText = msg;
+      chatBox.appendChild(div);
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    function startChat() {
+      topic = document.getElementById("topic").value;
+      document.getElementById("chat-box").innerHTML = "";
+      answers = [];
+      step = 0;
+      askingQuestions = false;
+
+      if (topic === "rental") {
+        addMessage(rentalLegalInfo);
+        setTimeout(() => {
+          addMessage("Would you like to proceed with creating a legal notice?");
+        }, 1000);
+      } else if (topic === "rti") {
+        addMessage(rtiLegalInfo);
+        setTimeout(() => {
+          addMessage("Would you like to file an RTI request now?");
+        }, 1000);
+      } else {
+        addMessage("Please select a topic to begin.");
+      }
+    }
+
+    function handleUserInput() {
+  const input = document.getElementById("user-input");
+  const text = input.value.trim();
+  if (!text) return;
+
+  addMessage(text, "user");
+
+  // 💡 Get legal suggestions based on what the user typed
+  const suggestionList = getSuggestions(text);
+  if (suggestionList.length > 0) {
+    suggestionList.forEach(s => addMessage(s));
+  }
+
+  input.value = "";
+
+  const yesWords = ["yes", "y", "yeah", "yep", "ok", "okay", "sure"];
+
+  if (!askingQuestions) {
+    if (yesWords.includes(text.toLowerCase())) {
+      questions = questionFlows[topic];
+      askingQuestions = true;
+      setTimeout(() => askNextQuestion(), 500);
+    } else {
+      addMessage("Okay. Let me know if you change your mind.");
+    }
+  } else {
+    answers.push(text);
+    step++;
+    askNextQuestion();
+  }
+}
+
+    function askNextQuestion() {
+      if (step < questions.length) {
+        addMessage(questions[step]);
+      } else {
+        addMessage("Thanks! All details collected. You can now download your legal document.");
+      }
+    }
+
+  function downloadPDF() {
+  if (!topic || answers.length !== questions.length) {
+    alert("Please complete the chat and fill the details before downloading.");
+    return;
+  }
+
+  const today = new Date().toLocaleDateString();
+
+  const letterHTML = `
+    <div style="font-family: 'Times New Roman', serif; padding: 40px; width: 100%; text-align: left; line-height: 1.7; color: #000;">
+      <p style="margin-bottom: 30px;">${today}</p>
+
+      <p><strong>From:</strong><br>
+      ${answers[0]}</p>
+
+      <p><strong>To:</strong><br>
+      ${topic === "rental" ? answers[1] : "The Public Information Officer"}</p>
+
+      <p><strong>Subject:</strong> ${topic === "rental" ? "Security Deposit Refund Request" : "Request for Information under RTI Act"}</p>
+
+      <p>Dear Sir/Madam,</p>
+
+      <p>I am writing to formally bring the following issue to your attention:</p>
+
+      <p>${answers[3]}</p>
+
+      <p>In accordance with Indian law ${
+        topic === "rental"
+          ? "under Rent Control regulations, landlords are required to return the tenant’s security deposit within 30 days of vacating the premises."
+          : "as per the RTI Act 2005, I have the right to request information from your department."
+      }</p>
+
+      <p>I kindly request that this matter be resolved at the earliest. Please respond within 15 days from the date of this letter.</p>
+
+      <p>Thank you.</p>
+
+      <br><br>
+      <p>Yours sincerely,</p>
+      <p>${answers[0]}</p>
+
+      <hr style="margin:40px 0;">
+
+      <h3 style="text-align: left;">Appendix: Issue Summary</h3>
+      <p><strong>Date:</strong> ${today}</p>
+      <p><strong>Topic:</strong> ${topic.toUpperCase()}</p>
+      <p><strong>Address:</strong> ${answers[2]}</p>
+      <p><strong>Issue:</strong> ${answers[3]}</p>
+    </div>
+  `;
+
+  const opt = {
+    margin: 0.5,
+    filename: topic + '_legal_letter.pdf',
+    html2canvas: { scale: 2 },
+    jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+  };
+
+  const tempDiv = document.createElement("div");
+  tempDiv.innerHTML = letterHTML;
+  document.body.appendChild(tempDiv);
+  // Save to local history
+let savedHistory = JSON.parse(localStorage.getItem("legalHistory")) || [];
+savedHistory.push({
+  topic,
+  answers,
+  date: today
+});
+localStorage.setItem("legalHistory", JSON.stringify(savedHistory));
+
+  html2pdf().from(tempDiv).set(opt).save().then(() => {
+    document.body.removeChild(tempDiv); // Clean up
+  });
+}
+function showHistory() {
+  const historyBox = document.getElementById("history-box");
+  const history = JSON.parse(localStorage.getItem("legalHistory")) || [];
+
+  if (history.length === 0) {
+    historyBox.innerHTML = "<p>No history available.</p>";
+  } else {
+    let content = "<h3>Previous Submissions:</h3>";
+    history.forEach((item, index) => {
+      content += `
+        <div style="border:1px solid #ccc; padding:10px; margin-bottom:10px; border-radius:5px;">
+          <p><strong>#${index + 1}</strong></p>
+          <p><strong>Date:</strong> ${item.date}</p>
+          <p><strong>Topic:</strong> ${item.topic.toUpperCase()}</p>
+          <p><strong>Issue Summary:</strong> ${item.answers[3]}</p>
+        </div>
+      `;
+    });
+    historyBox.innerHTML = content;
+  }
+
+  historyBox.style.display = "block";
+}
+function getSuggestions(text) {
+  const suggestions = [];
+
+  const lower = text.toLowerCase();
+
+  if (lower.includes("deposit") && lower.includes("landlord")) {
+    suggestions.push("🔹 This is a rental refund issue. Under Rent Control Acts, landlords must return your deposit within 30 days.");
+    suggestions.push("🔹 You may send a legal notice for recovery.");
+    suggestions.push("🔹 You can approach Rent Tribunal if landlord refuses.");
+  }
+
+  if (lower.includes("government") || lower.includes("info") || lower.includes("rti")) {
+    suggestions.push("🔹 This seems to relate to RTI (Right to Information). You can submit an RTI request to any government department.");
+    suggestions.push("🔹 File it via RTI Online portal or send it by post to the PIO.");
+  }
+
+  if (lower.includes("refund") && lower.includes("shop")) {
+    suggestions.push("🔹 This is a Consumer Rights issue. You can file a complaint with the District Consumer Forum.");
+    suggestions.push("🔹 Keep your receipt or proof of purchase.");
+  }
+
+  return suggestions;
+}
+
+  </script>
+</body>
+</html>
