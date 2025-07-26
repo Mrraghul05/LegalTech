@@ -1,8 +1,8 @@
-# ⚖️ LegalTech Assistant
+# LegalTech Assistant
 
 LegalTech Assistant is a web-based tool to help users create basic legal documents like Rental Dispute Notices and RTI Requests in India.
 
-## 🚀 Features
+## Features
 
 - Interactive chatbot for legal help.
 - PDF document generation (legal notice or RTI).
@@ -10,7 +10,7 @@ LegalTech Assistant is a web-based tool to help users create basic legal documen
 - Local history storage in browser.
 - No backend — runs fully in browser.
 
-## 📦 How to Use
+## How to Use
 
 1. Clone this repo or download ZIP.
 2. Open `index.html` in your browser.
@@ -23,15 +23,14 @@ LegalTech Assistant is a web-based tool to help users create basic legal documen
 - HTML, CSS, JavaScript
 - [html2pdf.js](https://github.com/eKoopmans/html2pdf)
 
-## 📚 Example Use Cases
+## Example Use Cases
 
 - Rental deposit refund notices
 - RTI requests to government departments
 
-## 📃 License
+## License
 
 MIT License
 
----
 
-Made by [Raghul](https://github.com/Mrraghul05)
+
